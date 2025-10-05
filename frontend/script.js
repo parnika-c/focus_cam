@@ -370,7 +370,9 @@ function updateEmotionPieChart() {
     `;
   });
   
-  // Update time
+  pieHTML += '</div>'; // close legend
+  
+  // Update time (outside legend to span full width)
   pieHTML += `<div class="update-time">Last updated: ${new Date().toLocaleTimeString()}</div>`;
   
   pieHTML += '</div>';
@@ -382,76 +384,107 @@ function updateEmotionPieChart() {
 function updateEmotionLineChart() {
   const lineChartContainer = document.getElementById('emotionLineChart');
   if (!lineChartContainer) return;
-  
-  if (emotionData.length < 2) {
+
+  const maxPoints = 100; // plot up to last 100 points
+  const recent = emotionData
+    .filter(d => typeof d === 'object' && d && (typeof d.focusScore === 'number' || !isNaN(Number(d.focusScore))))
+    .slice(-maxPoints);
+
+  if (recent.length < 2) {
     lineChartContainer.innerHTML = '<p class="muted">Need more data points for trend chart</p>';
     return;
   }
-  
-  // Create simple line chart
-  const maxPoints = 20; // Show last 20 points
-  const recentData = emotionData.slice(-maxPoints);
-  const emotions = ['CALM', 'HAPPY', 'CONFUSED', 'STRESSED', 'SAD', 'ANGRY', 'FEAR', 'DISGUSTED', 'SURPRISED'];
-  const colors = {
-    'CALM': '#10b981',      // emerald
-    'HAPPY': '#f59e0b',     // amber
-    'CONFUSED': '#6366f1',  // indigo
-    'STRESSED': '#f43f5e',  // rose
-    'SAD': '#0ea5e9',       // sky
-    'ANGRY': '#ef4444',     // red
-    'FEAR': '#8b5cf6',      // violet
-    'DISGUSTED': '#14b8a6', // teal
-    'SURPRISED': '#22d3ee', // cyan
-  };
-  
-  let chartHTML = '<div class="line-chart">';
-  
-  // Create SVG for line chart
-  const width = 300;
-  const height = 150;
-  const padding = 20;
-  
-  chartHTML += `
-    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <defs>
-        <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
-          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#e0e0e0" stroke-width="0.5"/>
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#grid)"/>
-  `;
-  
-  // Draw emotion lines
-  emotions.forEach(emotion => {
-    const emotionPoints = recentData.map((item, index) => {
-      const x = padding + (index / (recentData.length - 1)) * (width - 2 * padding);
-      const y = padding + (emotions.indexOf(item.emotion) / (emotions.length - 1)) * (height - 2 * padding);
-      return `${x},${y}`;
-    }).filter((point, index) => recentData[index].emotion === emotion);
-    
-    if (emotionPoints.length > 0) {
-      const color = colors[emotion] || '#607D8B';
-      chartHTML += `
-        <polyline 
-          points="${emotionPoints.join(' ')}" 
-          fill="none" 
-          stroke="${color}" 
-          stroke-width="2"
-          opacity="0.7"
-        />
-      `;
-    }
+
+  // Parse timestamps and scores
+  let times = recent.map(d => {
+    const t = d.timestamp instanceof Date ? d.timestamp.getTime() : Date.parse(d.timestamp);
+    return Number.isFinite(t) ? t : NaN;
   });
-  
-  // Add time labels
-  chartHTML += `
-    <text x="10" y="${height - 5}" class="chart-label" style="font-size: 10px;">Time →</text>
-    <text x="5" y="15" class="chart-label" style="font-size: 10px;">Emotions</text>
+  const scores = recent.map(d => {
+    const v = Number(d.focusScore);
+    return Math.max(0, Math.min(100, Number.isFinite(v) ? v : 0));
+  });
+
+  // If no valid timestamps, synthesize at 5s intervals
+  const hasValidTime = times.some(Number.isFinite);
+  if (!hasValidTime) {
+    times = recent.map((_, i) => i * 5000);
+  } else {
+    for (let i = 0; i < times.length; i++) {
+      if (!Number.isFinite(times[i])) times[i] = i > 0 ? times[i - 1] + 5000 : Date.now();
+    }
+    const t0 = times[0];
+    times = times.map(t => t - t0);
+  }
+
+  // Build SVG line chart (x=time, y=score)
+  const width = 360;
+  const height = 200;
+  const padding = { left: 44, right: 16, top: 12, bottom: 40 };
+  const plotW = width - padding.left - padding.right;
+  const plotH = height - padding.top - padding.bottom;
+
+  const timeMax = Math.max(...times);
+  const xAt = (t) => padding.left + (timeMax > 0 ? (t / timeMax) * plotW : 0);
+  const yAt = (s) => padding.top + (1 - s / 100) * plotH;
+
+  // Points array
+  const pts = times.map((t, i) => ({ x: xAt(t), y: yAt(scores[i]) }));
+
+  // Build a smooth Catmull–Rom to Bezier path
+  const alpha = 1; // 1 = Catmull-Rom, smaller < 1 gives tighter curves
+  let pathD = `M ${pts[0].x},${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = i > 0 ? pts[i - 1] : pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = i + 2 < pts.length ? pts[i + 2] : p2;
+
+    const c1x = p1.x + (p2.x - p0.x) / 6 * alpha;
+    const c1y = p1.y + (p2.y - p0.y) / 6 * alpha;
+    const c2x = p2.x - (p3.x - p1.x) / 6 * alpha;
+    const c2y = p2.y - (p3.y - p1.y) / 6 * alpha;
+
+    pathD += ` C ${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`;
+  }
+
+  // Axis ticks
+  const xTicks = 4; // 0%, 33%, 66%, 100%
+  const xTickEls = [];
+  for (let i = 0; i <= xTicks; i++) {
+    const t = (timeMax / xTicks) * i;
+    const x = xAt(t);
+    const secs = Math.round(t / 1000);
+    xTickEls.push(`
+      <line x1="${x}" y1="${height - padding.bottom}" x2="${x}" y2="${height - padding.bottom + 4}" stroke="#cbd5e1"/>
+      <text x="${x}" y="${height - padding.bottom + 16}" text-anchor="middle" class="chart-label">${secs}s</text>
+    `);
+  }
+
+  const yTicks = [0, 50, 100];
+  const yTickEls = yTicks.map(s => {
+    const y = yAt(s);
+    return `
+      <line x1="${padding.left - 4}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="#eef2f7"/>
+      <text x="${padding.left - 8}" y="${y + 3}" text-anchor="end" class="chart-label">${s}</text>
+    `;
+  });
+
+  const chartHTML = `
+    <div class="line-chart">
+      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <rect x="${padding.left}" y="${padding.top}" width="${plotW}" height="${plotH}" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+        ${yTickEls.join('')}
+        ${xTickEls.join('')}
+        <path d="${pathD}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+        <!-- Y axis label rotated -->
+        <text x="${padding.left - 28}" y="${padding.top + plotH / 2}" transform="rotate(-90 ${padding.left - 28},${padding.top + plotH / 2})" text-anchor="middle" class="chart-label">Score</text>
+        <!-- X axis label below axis -->
+        <text x="${padding.left + plotW / 2}" y="${height - 8}" text-anchor="middle" class="chart-label">Time</text>
+      </svg>
+    </div>
   `;
-  
-  chartHTML += '</svg>';
-  chartHTML += '</div>';
-  
+
   lineChartContainer.innerHTML = chartHTML;
 }
 
