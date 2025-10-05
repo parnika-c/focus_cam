@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+   <link rel="stylesheet" href="style.css" />
+   
+  <title>StudySync – Focus Tracker</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    video {
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      width: 400px;
+    }
+    button {
+      margin: 1rem;
+      padding: 0.5rem 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>StudySync – Focus Tracker</h1>
+  <video id="webcam" autoplay playsinline></video>
+  <br>
+  <button id="startBtn">Start Session</button>
+  <button id="stopBtn" disabled>Stop Session</button>
+  <p id="status">Status: Not recording</p>
+
+  <script src="script.js"></script>
+</body>
+</html>
