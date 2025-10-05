@@ -1,4 +1,4 @@
-Focus Cam
+#Focus Cam
 
 Lightweight web app that captures webcam frames in the browser and posts them to an AWS Lambda. The Lambda uses Amazon Rekognition to produce a simple "focus" score and records events in DynamoDB.
 
