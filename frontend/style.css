@@ -1,0 +1,157 @@
+/* Define design tokens used across the UI */
+:root {
+  --primary: #6366f1; /* indigo-500 */
+  --primary-rgb: 99, 102, 241;
+  --slate-900: #0f172a;
+  --slate-600: #475569;
+  --slate-100: #f1f5f9;
+  --slate-400: #94a3b8;
+  --muted-fg: #6b7280; /* gray-500 */
+  color-scheme: light;
+}
+
+/* Container sizing only, no background here so page gradient is visible */
+.container {
+  max-width: 72rem;
+  margin-inline: auto;
+  padding: 2rem 1rem;
+}
+
+/* Header section matching the provided design */
+.header { text-align: center; margin-bottom: 2rem; }
+.header-top { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1rem; }
+.header-icon { padding: 0.75rem; background: rgba(var(--primary-rgb), 0.12); border-radius: 9999px; display: inline-flex; }
+.icon-eye { width: 2rem; height: 2rem; color: var(--primary); }
+.header-title {
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  line-height: 1.1; font-weight: 700;
+  background: linear-gradient(90deg, var(--slate-900), var(--slate-600));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.header-subtitle { color: var(--muted-fg); max-width: 32rem; margin-inline: auto; }
+
+/* Page background and base */
+html, body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  color: #0f172a;
+  background: #f8fafc;
+}
+.page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+}
+
+/* Layout */
+.layout {
+  display: grid;
+  gap: 1.5rem; /* gap-6 */
+}
+@media (min-width: 1024px) {
+  .layout { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .layout-main { grid-column: span 2 / span 2; }
+}
+
+/* Cards */
+.card {
+  border-radius: 0.75rem; /* rounded-lg */
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+.glass { backdrop-filter: blur(6px); }
+.shadow-xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+.shadow-lg { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); }
+.card-content { padding: 1.5rem; }
+
+/* Bars and headings */
+.bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+.bar-left { display: flex; align-items: center; gap: 0.5rem; }
+.h2 { font-size: 1.125rem; font-weight: 600; }
+.h3 { font-size: 1rem; font-weight: 600; }
+.mb { margin-bottom: 1rem; }
+
+/* Icons and utilities */
+.icon { width: 1.25rem; height: 1.25rem; color: currentColor; }
+.icon.sm { width: 1.25rem; height: 1.25rem; }
+.icon.xl { width: 4rem; height: 4rem; }
+.text-primary { color: var(--primary); }
+.opacity-50 { opacity: 0.5; }
+.mr { margin-right: 0.5rem; }
+.ml-auto { margin-left: auto; }
+.center { text-align: center; }
+.space > * + * { margin-top: 0.75rem; }
+.small { font-size: 0.875rem; }
+
+/* Badges */
+.badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 1.5rem; padding: 0 0.5rem; border-radius: 9999px;
+  font-size: 0.75rem; font-weight: 600; line-height: 1;
+}
+.badge-secondary { background: rgba(100,116,139,0.15); color: #475569; }
+.badge-default { background: var(--primary); color: #fff; }
+
+/* Video frame */
+.video-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9; /* aspect-video */
+  background: #0f172a; /* slate-900 */
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.35);
+}
+.video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.standby {
+  width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8;
+}
+.standby-title { font-size: 1.125rem; margin-top: 1rem; margin-bottom: 0.25rem; }
+
+/* Recording indicator */
+.rec-indicator {
+  position: absolute; top: 1rem; left: 1rem; display: flex; align-items: center; gap: 0.5rem;
+  background: rgba(239, 68, 68, 0.9); color: #fff; padding: 0.5rem 0.75rem; border-radius: 9999px;
+}
+.rec-indicator .dot { width: 0.5rem; height: 0.5rem; background: #fff; border-radius: 9999px; animation: pulse 1.2s infinite; }
+.rec-indicator .rec-text { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* Controls */
+.controls { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+.btn {
+  appearance: none; border: 0; border-radius: 0.5rem; padding: 0 1rem;
+  height: 3rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-weight: 600; cursor: pointer; transition: filter 0.15s ease, transform 0.02s ease;
+}
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { filter: brightness(1.05); }
+.btn-destructive { background: #ef4444; color: #fff; }
+.btn-destructive:hover { filter: brightness(1.05); }
+
+/* Timer & score */
+.time { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 1.875rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; }
+.score { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+.progress { width: 100%; height: 0.5rem; background: rgba(148,163,184,0.25); border-radius: 9999px; overflow: hidden; }
+.progress-inner { height: 100%; background: var(--primary); width: 0%; transition: width 0.2s ease; }
+
+/* Features */
+.features { display: grid; gap: 0.75rem; font-size: 0.95rem; }
+.feature { display: flex; align-items: center; gap: 0.5rem; }
+.pill { width: 0.5rem; height: 0.5rem; border-radius: 9999px; display: inline-block; }
+.pill.green { background: #22c55e; }
+.pill.blue { background: #3b82f6; }
+.pill.purple { background: #8b5cf6; }
+.pill.orange { background: #f97316; }
+
+/* Footer */
+.footer { text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(15, 23, 42, 0.1); }
+
+/* Muted text */
+.muted { color: var(--muted-fg); }

@@ -3,34 +3,141 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   <link rel="stylesheet" href="style.css" />
-   
+  <link rel="stylesheet" href="style.css" />
   <title>StudySync – Focus Tracker</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 2rem;
-    }
-    video {
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      width: 400px;
-    }
-    button {
-      margin: 1rem;
-      padding: 0.5rem 1rem;
-    }
-  </style>
 </head>
 <body>
+  <div class="page">
+    <div class="container">
+      <div class="header">
+        <div class="header-top">
+          <div class="header-icon" aria-hidden="true">
+            <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+              <circle cx="12" cy="12" r="3" fill="currentColor"/>
+            </svg>
+          </div>
+          <h1 class="header-title">FocusCam</h1>
+        </div>
+        <p class="header-subtitle">AI-powered focus monitoring to enhance your study sessions and productivity</p>
+      </div>
 
-  <h1>FocusCam</h1>
-  <video id="webcam" autoplay playsinline></video>
-  <br>
-  <button id="startBtn">Start Session</button>
-  <button id="stopBtn" disabled>Stop Session</button>
-  <p id="status">Status: Not recording</p>
+      <div class="layout">
+        <!-- Camera Section (spans 2 columns on large screens) -->
+        <div class="layout-main">
+          <div class="card shadow-xl glass">
+            <div class="card-content">
+              <div class="bar">
+                <div class="bar-left">
+                  <svg class="icon sm text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="3"/>
+                  </svg>
+                  <h2 class="h2">Live Camera Feed</h2>
+                </div>
+                <span id="statusBadge" class="badge badge-secondary ml-auto">Standby</span>
+              </div>
+
+              <div class="video-frame">
+                <div id="recordingIndicator" class="rec-indicator" style="display:none">
+                  <span class="dot"></span>
+                  <span class="rec-text">RECORDING</span>
+                </div>
+
+                <video id="webcam" autoplay playsinline muted class="video" style="display:none"></video>
+
+                <div id="standbyPlaceholder" class="standby">
+                  <svg class="icon xl opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="3"/>
+                  </svg>
+                  <p class="standby-title">Camera Ready</p>
+                  <p class="muted">Start a session to begin monitoring</p>
+                </div>
+              </div>
+
+              <div class="controls">
+                <button id="startBtn" class="btn btn-primary">
+                  <svg class="icon sm mr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  Start Focus Session
+                </button>
+                <button id="stopBtn" class="btn btn-destructive" disabled>
+                  <svg class="icon sm mr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="6" y="6" width="12" height="12"></rect>
+                  </svg>
+                  End Session
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="layout-side">
+          <!-- Session Timer Card -->
+          <div class="card shadow-lg glass">
+            <div class="card-content">
+              <div class="bar">
+                <div class="bar-left">
+                  <svg class="icon sm text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="10" y1="2" x2="14" y2="2"></line>
+                    <line x1="12" y1="14" x2="12" y2="8"></line>
+                    <path d="M4.93 4.93l2.83 2.83M19.07 4.93l-2.83 2.83M4 13a8 8 0 1 0 16 0 8 8 0 1 0-16 0z"></path>
+                  </svg>
+                  <h3 class="h3">Session Time</h3>
+                </div>
+              </div>
+              <div class="center">
+                <div id="sessionTime" class="time">00:00:00</div>
+                <p id="sessionStatusText" class="muted">Not recording</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Focus Score Card -->
+          <div class="card shadow-lg glass">
+            <div class="card-content">
+              <div class="bar">
+                <div class="bar-left">
+                  <svg class="icon sm text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  <h3 class="h3">Focus Score</h3>
+                </div>
+              </div>
+              <div class="center space">
+                <div class="score" id="focusScoreValue">95%</div>
+                <div class="progress">
+                  <div id="focusProgressInner" class="progress-inner" style="width:95%"></div>
+                </div>
+                <p id="focusFeedbackText" class="muted">Excellent focus!</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Features Card -->
+          <div class="card shadow-lg glass">
+            <div class="card-content">
+              <h3 class="h3 mb">Features</h3>
+              <div class="features">
+                <div class="feature"><span class="pill green"></span><span>Real-time monitoring</span></div>
+                <div class="feature"><span class="pill blue"></span><span>Focus analytics</span></div>
+                <div class="feature"><span class="pill purple"></span><span>Session tracking</span></div>
+                <div class="feature"><span class="pill orange"></span><span>Productivity insights</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p class="muted small">Your privacy is protected. All monitoring happens locally on your device.</p>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
