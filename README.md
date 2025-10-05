@@ -1,4 +1,4 @@
-# Focus Cam
+# FocusCam
 
 This application captures webcam frames every 5 seconds in the browser and posts them to an AWS Lambda. The Lambda uses Amazon Rekognition to produce a simple "focus" score and records events in DynamoDB.
 
