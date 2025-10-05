@@ -125,6 +125,38 @@ startBtn.onclick = async () => {
   }
 };
 
+const ADVICE_API = 'https://kvtfghplhf.execute-api.us-west-1.amazonaws.com/default/GenerateSessionAdvice';
+
+async function getSessionAdvice(userId, sessionId) {
+  try {
+    const res = await fetch(ADVICE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, sessionId: sessionId })
+    });
+
+    if (!res.ok) {
+      console.error("Advice fetch failed:", await res.text());
+      return;
+    }
+
+    const data = await res.json();
+    displayTips(data.tips);
+  } catch (err) {
+    console.error("Error getting advice:", err);
+  }
+}
+
+function displayTips(tips) {
+  const container = document.getElementById("tipsContainer");
+  if (!container) return;
+
+  container.innerHTML = `
+    <h3>Session Tips</h3>
+    <ul>${tips.map(tip => `<li>${tip}</li>`).join('')}</ul>
+  `;
+}
+
 // Stop session
 stopBtn.onclick = () => {
   if (captureInterval) clearInterval(captureInterval);
@@ -140,6 +172,17 @@ stopBtn.onclick = () => {
   startBtn.disabled = false;
   stopBtn.disabled = true;
   setRecordingUI(false);
+
+  // // Fetch session summary from your backend
+  // const summary = await fetchSummary(USER_ID, sessionId);
+
+  // // Then call your API that wraps Bedrock
+  // const advice = await fetchAdviceFromBedrock(summary);
+
+  // // Display the tips in your UI
+  // displayAdviceToUser(advice);
+
+  getSessionAdvice(USER_ID, sessionId);
 };
 
 // Capture image and send to API
