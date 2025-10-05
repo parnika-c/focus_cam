@@ -55,6 +55,10 @@ body {
   .layout-main { grid-column: span 2 / span 2; }
 }
 
+.layout-side .card + .card {
+  margin-top: 0.5rem; /* further reduced gap between sidebar cards */
+}
+
 /* Cards */
 .card {
   border-radius: 0.75rem; /* rounded-lg */
@@ -64,7 +68,7 @@ body {
 .glass { backdrop-filter: blur(6px); }
 .shadow-xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
 .shadow-lg { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); }
-.card-content { padding: 1.5rem; }
+.card-content { padding: 1rem; }
 
 /* Bars and headings */
 .bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
@@ -198,15 +202,16 @@ body {
   letter-spacing: 0.05em;
 }
 
-.emotion-calm { background: #dcfce7; color: #166534; }
-.emotion-happy { background: #fef3c7; color: #92400e; }
-.emotion-confused { background: #fed7aa; color: #c2410c; }
-.emotion-stressed { background: #fee2e2; color: #dc2626; }
-.emotion-sad { background: #dbeafe; color: #1d4ed8; }
-.emotion-angry { background: #fce7f3; color: #be185d; }
+.emotion-calm { background: #dcfce7; color: #5bcad5; }
+.emotion-happy { background: #ffea95; color: #d49f00; }
+.emotion-confused { background: #aad4fe; color: #0c9bc2; }
+.emotion-stressed { background: #ffe0b5; color: #dc7826; }
+.emotion-sad { background: hsl(214, 100%, 83%); color: #1d4ed8; }
+.emotion-angry { background: #eba1a1; color: #be5518; }
 .emotion-fear { background: #e9d5ff; color: #7c3aed; }
-.emotion-disgusted { background: #d6d3d1; color: #78716c; }
-.emotion-unknown { background: #f3f4f6; color: #6b7280; }
+.emotion-disgusted { background: #84ab8c; color: #1d6b00; }
+.emotion-unknown { background: #ffffff; color: #001844; }
+.emotion-surprised { background: #cffafe; color: #0e7490; }
 
 /* Pie Chart Styles */
 .pie-chart-container {

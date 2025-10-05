@@ -18,8 +18,9 @@ let captureInterval = null;
 let sessionTimer = null;
 let focusInterval = null;
 let sessionSeconds = 0;
-let focusScore = 95;
+let focusScore = 100;
 let sessionId = null;
+let manualFocusOverride = false;
 
 // Emotion tracking data
 let emotionData = [];
@@ -39,6 +40,7 @@ function formatTime(totalSeconds) {
 }
 
 function setRecordingUI(isRecording) {
+  if (!statusBadge || !recordingIndicator || !standbyPlaceholder || !video || !sessionStatusText) return;
   if (isRecording) {
     statusBadge.textContent = 'Recording';
     statusBadge.classList.remove('badge-secondary');
@@ -58,25 +60,33 @@ function setRecordingUI(isRecording) {
   }
 }
 
-function startSessionTimers() {
-  // Session time
-  sessionTimer = setInterval(() => {
-    sessionSeconds += 1;
-    sessionTimeEl.textContent = formatTime(sessionSeconds);
-  }, 1000);
+// Reflect focus score in UI
+function updateFocusUI(score) {
+  if (!focusScoreValue || !focusProgressInner || !focusFeedbackText) return;
+  const rounded = Math.max(0, Math.min(100, Math.round(typeof score === 'number' ? score : 0)));
+  focusScoreValue.textContent = `${rounded}%`;
+  focusProgressInner.style.width = `${rounded}%`;
+  let feedback = 'Needs improvement';
+  if (rounded >= 90) feedback = 'Excellent focus!';
+  else if (rounded >= 75) feedback = 'Good focus';
+  focusFeedbackText.textContent = feedback;
+}
 
-  // Simulate focus score fluctuations
-  focusInterval = setInterval(() => {
-    const delta = (Math.random() - 0.5) * 2; // -1..1
-    focusScore = Math.max(85, Math.min(100, focusScore + delta));
-    const rounded = Math.round(focusScore);
-    focusScoreValue.textContent = `${rounded}%`;
-    focusProgressInner.style.width = `${rounded}%`;
-    let feedback = 'Needs improvement';
-    if (rounded >= 90) feedback = 'Excellent focus!';
-    else if (rounded >= 75) feedback = 'Good focus';
-    focusFeedbackText.textContent = feedback;
-  }, 1000);
+function startSessionTimers() {
+  if (sessionTimeEl) {
+    sessionTimer = setInterval(() => {
+      sessionSeconds += 1;
+      sessionTimeEl.textContent = formatTime(sessionSeconds);
+    }, 1000);
+  }
+
+  if (focusScoreValue && focusProgressInner && focusFeedbackText) {
+    // Reflect the current focusScore value (no random simulation)
+    focusInterval = setInterval(() => {
+      if (manualFocusOverride) return;
+      updateFocusUI(focusScore);
+    }, 1000);
+  }
 }
 
 function stopSessionTimers() {
@@ -89,41 +99,43 @@ function stopSessionTimers() {
 }
 
 // Start webcam and session
-startBtn.onclick = async () => {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
+if (startBtn) {
+  startBtn.onclick = async () => {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (video) video.srcObject = stream;
 
-    // create a session id for this recording session
-    sessionId = `${USER_ID}-${Date.now()}`;
+      // create a session id for this recording session
+      sessionId = `${USER_ID}-${Date.now()}`;
 
-    startBtn.disabled = true;
-    stopBtn.disabled = false;
-    sessionSeconds = 0;
-    sessionTimeEl.textContent = '00:00:00';
-    setRecordingUI(true);
+      startBtn.disabled = true;
+      if (stopBtn) stopBtn.disabled = false;
+      sessionSeconds = 0;
+      if (sessionTimeEl) sessionTimeEl.textContent = '00:00:00';
+      setRecordingUI(true);
 
-    // Reset emotion data for new session
-    emotionData = [];
-    currentEmotion = 'UNKNOWN';
-    updateEmotionDisplay();
+      // Reset emotion data for new session
+      emotionData = [];
+      currentEmotion = 'UNKNOWN';
+      updateEmotionDisplay();
 
-    startSessionTimers();
-    captureInterval = setInterval(captureAndSend, 5000); // every 5 seconds
-    
-  // Start chart update interval - updates every 5 seconds
-  chartUpdateInterval = setInterval(() => {
-    console.log('🔄 Auto-updating emotion pie chart...');
-    updateEmotionCharts();
-  }, 5000);
-  } catch (error) {
-    console.error('Error accessing camera:', error);
-    setRecordingUI(false);
-    stopBtn.disabled = true;
-    startBtn.disabled = false;
-    sessionStatusText.textContent = 'Camera access denied';
-  }
-};
+      startSessionTimers();
+      captureInterval = setInterval(captureAndSend, 5000); // every 5 seconds
+      
+      // Start chart update interval - updates every 5 seconds
+      chartUpdateInterval = setInterval(() => {
+        console.log('🔄 Auto-updating emotion pie chart...');
+        updateEmotionCharts();
+      }, 5000);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setRecordingUI(false);
+      if (stopBtn) stopBtn.disabled = true;
+      startBtn.disabled = false;
+      if (sessionStatusText) sessionStatusText.textContent = 'Camera access denied';
+    }
+  };
+}
 
 const ADVICE_API = 'https://kvtfghplhf.execute-api.us-west-1.amazonaws.com/default/GenerateSessionAdvice';
 
@@ -151,39 +163,47 @@ function displayTips(tips) {
   const container = document.getElementById("tipsContainer");
   if (!container) return;
 
+  const items = Array.isArray(tips) && tips.length
+    ? tips.slice(0, 5)
+    : ["No tips available yet. Try recording a longer session for more insights."];
+
   container.innerHTML = `
-    <h3>Session Tips</h3>
-    <ul>${tips.map(tip => `<li>${tip}</li>`).join('')}</ul>
+    <ul>${items.map(tip => `<li>${tip}</li>`).join('')}</ul>
   `;
 }
 
-// Stop session
-stopBtn.onclick = () => {
-  if (captureInterval) clearInterval(captureInterval);
-  captureInterval = null;
-  stopSessionTimers();
+// Stop session -> persist data and navigate to analytics page
+if (stopBtn) {
+  stopBtn.onclick = () => {
+    if (captureInterval) clearInterval(captureInterval);
+    captureInterval = null;
+    stopSessionTimers();
 
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
-    stream = null;
-  }
-  if (video) video.srcObject = null;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
+    if (video) video.srcObject = null;
 
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
-  setRecordingUI(false);
+    if (startBtn) startBtn.disabled = false;
+    stopBtn.disabled = true;
+    setRecordingUI(false);
 
-  // // Fetch session summary from your backend
-  // const summary = await fetchSummary(USER_ID, sessionId);
+    // Persist session data for analytics page
+    try {
+      sessionStorage.setItem('fc_emotionData', JSON.stringify(emotionData));
+      sessionStorage.setItem('fc_currentEmotion', currentEmotion);
+      if (sessionId) sessionStorage.setItem('fc_sessionId', sessionId);
+      sessionStorage.setItem('fc_userId', USER_ID);
+      sessionStorage.setItem('fc_sessionSeconds', String(sessionSeconds));
+    } catch (e) {
+      console.warn('Unable to persist session data:', e);
+    }
 
-  // // Then call your API that wraps Bedrock
-  // const advice = await fetchAdviceFromBedrock(summary);
-
-  // // Display the tips in your UI
-  // displayAdviceToUser(advice);
-
-  getSessionAdvice(USER_ID, sessionId);
-};
+    // Navigate to analytics page
+    window.location.href = 'analytics.html';
+  };
+}
 
 // Capture image and send to API
 async function captureAndSend() {
@@ -227,6 +247,12 @@ async function captureAndSend() {
           rawEmotion: result.emotionRaw,
           focusScore: result.focusScore
         });
+        
+        // Update focus score from API if provided
+        if (typeof result.focusScore === 'number') {
+          focusScore = Math.max(0, Math.min(100, Math.round(result.focusScore)));
+          updateFocusUI(focusScore);
+        }
         
         // Update emotion display
         updateEmotionDisplay();
@@ -289,17 +315,18 @@ function updateEmotionPieChart() {
   
   const total = emotionData.length;
   
-  // Create pie chart using CSS conic-gradient
+  // Modern, clean color palette
   const colors = {
-    'CALM': '#4CAF50',
-    'HAPPY': '#FFEB3B',
-    'CONFUSED': '#FF9800',
-    'STRESSED': '#F44336',
-    'SAD': '#2196F3',
-    'ANGRY': '#E91E63',
-    'FEAR': '#9C27B0',
-    'DISGUSTED': '#795548',
-    'UNKNOWN': '#607D8B'
+    'CALM': '#10b981',      // emerald
+    'HAPPY': '#f59e0b',     // amber
+    'CONFUSED': '#6366f1',  // indigo
+    'STRESSED': '#f43f5e',  // rose
+    'SAD': '#0ea5e9',       // sky
+    'ANGRY': '#ef4444',     // red
+    'FEAR': '#8b5cf6',      // violet
+    'DISGUSTED': '#14b8a6', // teal
+    'SURPRISED': '#22d3ee', // cyan
+    'UNKNOWN': '#94a3b8'    // slate
   };
   
   let pieHTML = '<div class="pie-chart-container">';
@@ -309,35 +336,29 @@ function updateEmotionPieChart() {
   let conicGradient = 'conic-gradient(';
   
   sortedEmotions.forEach(([emotion, count], index) => {
-    const percentage = (count / total) * 100;
     const angle = (count / total) * 360;
-    const color = colors[emotion] || '#607D8B';
-    
+    const color = colors[emotion] || '#94a3b8';
     conicGradient += `${color} ${cumulativeAngle}deg ${cumulativeAngle + angle}deg`;
     if (index < sortedEmotions.length - 1) conicGradient += ', ';
-    
     cumulativeAngle += angle;
   });
   
   conicGradient += ')';
   
+  // Donut without center number/label
   pieHTML += `
     <div class="pie-chart" style="background: ${conicGradient}"></div>
-    <div class="pie-center">
-      <div class="pie-center-text">${total}</div>
-      <div class="pie-center-label">Total</div>
-    </div>
   `;
   
   pieHTML += '</div>';
   
-  // Add legend with most common emotions first
+  // Legend
   pieHTML += '<div class="pie-legend">';
   pieHTML += '<div class="legend-title">Most Common Emotions:</div>';
   
   sortedEmotions.forEach(([emotion, count]) => {
     const percentage = ((count / total) * 100).toFixed(1);
-    const color = colors[emotion] || '#607D8B';
+    const color = colors[emotion] || '#94a3b8';
     const isMostCommon = sortedEmotions.indexOf([emotion, count]) === 0;
     
     pieHTML += `
@@ -349,7 +370,7 @@ function updateEmotionPieChart() {
     `;
   });
   
-  // Show update timestamp
+  // Update time
   pieHTML += `<div class="update-time">Last updated: ${new Date().toLocaleTimeString()}</div>`;
   
   pieHTML += '</div>';
@@ -370,16 +391,17 @@ function updateEmotionLineChart() {
   // Create simple line chart
   const maxPoints = 20; // Show last 20 points
   const recentData = emotionData.slice(-maxPoints);
-  const emotions = ['CALM', 'HAPPY', 'CONFUSED', 'STRESSED', 'SAD', 'ANGRY', 'FEAR', 'DISGUSTED'];
+  const emotions = ['CALM', 'HAPPY', 'CONFUSED', 'STRESSED', 'SAD', 'ANGRY', 'FEAR', 'DISGUSTED', 'SURPRISED'];
   const colors = {
-    'CALM': '#4CAF50',
-    'HAPPY': '#FFEB3B', 
-    'CONFUSED': '#FF9800',
-    'STRESSED': '#F44336',
-    'SAD': '#2196F3',
-    'ANGRY': '#E91E63',
-    'FEAR': '#9C27B0',
-    'DISGUSTED': '#795548'
+    'CALM': '#10b981',      // emerald
+    'HAPPY': '#f59e0b',     // amber
+    'CONFUSED': '#6366f1',  // indigo
+    'STRESSED': '#f43f5e',  // rose
+    'SAD': '#0ea5e9',       // sky
+    'ANGRY': '#ef4444',     // red
+    'FEAR': '#8b5cf6',      // violet
+    'DISGUSTED': '#14b8a6', // teal
+    'SURPRISED': '#22d3ee', // cyan
   };
   
   let chartHTML = '<div class="line-chart">';
@@ -432,3 +454,66 @@ function updateEmotionLineChart() {
   
   lineChartContainer.innerHTML = chartHTML;
 }
+
+// Initialize analytics page if present
+document.addEventListener('DOMContentLoaded', () => {
+  const onAnalytics = !!document.getElementById('emotionPieChart');
+  if (!onAnalytics) return;
+
+  try {
+    const stored = sessionStorage.getItem('fc_emotionData');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // ensure it is an array of objects
+      if (Array.isArray(parsed)) {
+        emotionData = parsed.map(item => ({ ...item }));
+      }
+    }
+    const storedEmotion = sessionStorage.getItem('fc_currentEmotion');
+    if (storedEmotion) currentEmotion = storedEmotion;
+    const storedSessionId = sessionStorage.getItem('fc_sessionId');
+    const storedUserId = sessionStorage.getItem('fc_userId') || USER_ID;
+
+    // Populate Session Summary stats
+    const statDurationEl = document.getElementById('statDuration');
+    const statAvgFocusEl = document.getElementById('statAvgFocus');
+    const statPerfBadgeEl = document.getElementById('statPerformanceBadge');
+
+    // Duration
+    const storedSecondsRaw = sessionStorage.getItem('fc_sessionSeconds');
+    const storedSeconds = storedSecondsRaw ? parseInt(storedSecondsRaw, 10) : 0;
+    if (statDurationEl) statDurationEl.textContent = formatTime(Number.isFinite(storedSeconds) ? storedSeconds : 0);
+
+    // Use average focusScore value for summary
+    if (statAvgFocusEl || statPerfBadgeEl) {
+      const focusValues = Array.isArray(emotionData)
+        ? emotionData
+            .map(d => (typeof d.focusScore === 'number' ? d.focusScore : NaN))
+            .filter(v => Number.isFinite(v))
+        : [];
+
+      const avg = focusValues.length
+        ? Math.round(focusValues.reduce((a, b) => a + b, 0) / focusValues.length)
+        : 0;
+      if (statAvgFocusEl) statAvgFocusEl.textContent = `${avg}%`;
+
+      if (statPerfBadgeEl) {
+        let text = 'Needs Improvement';
+        let cls = 'pill-danger';
+        if (avg >= 90) { text = 'Excellent'; cls = 'pill-success'; }
+        else if (avg >= 75) { text = 'Good'; cls = 'pill-info'; }
+        else if (avg >= 60) { text = 'Fair'; cls = 'pill-warn'; }
+        statPerfBadgeEl.textContent = text;
+        statPerfBadgeEl.className = `pill ${cls}`;
+      }
+    }
+
+    updateEmotionCharts();
+
+    if (storedUserId && storedSessionId) {
+      getSessionAdvice(storedUserId, storedSessionId);
+    }
+  } catch (e) {
+    console.warn('Failed to restore analytics data:', e);
+  }
+});

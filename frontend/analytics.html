@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="analytics.css" />
+  <title>FocusCam – Session Analytics</title>
+</head>
+<body>
+
+  <div class="page">
+
+    
+    <div class="container">
+      <!-- Hero header -->
+
+      <div class="container">
+        <div class="header">
+          <div class="header-top">
+            <div class="header-icon" aria-hidden="true">
+              <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 12l4 4 10-10"></path>
+              </svg>
+            </div>
+            <h1 class="header-title">Session Complete</h1>
+          </div>
+          <p class="header-subtitle">Here's how you performed during your focus session</p>
+        </div>
+
+      <!-- Summary KPIs -->
+      <section class="summary-grid">
+        <div class="summary-card">
+          <div class="kpi-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12,6 12,12 16,14"/>
+            </svg>
+          </div>
+          <div id="statDuration" class="kpi-value">00:00:07</div>
+          <div class="kpi-label">Session Duration</div>
+        </div>
+        <div class="summary-card">
+          <div class="kpi-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+          </div>
+          <div id="statAvgFocus" class="kpi-value">100%</div>
+          <div class="kpi-label"> Average Focus Score</div>
+        </div>
+        <div class="summary-card performance-card">
+          <div class="kpi-icon" aria-hidden="true" style="visibility:hidden"></div>
+          <div class="kpi-value">
+            <span id="statPerformanceBadge" class="pill pill-success">Excellent</span>
+          </div>
+          <div class="kpi-label">Overall Performance</div>
+        </div>
+      </section>
+
+      <!-- Charts -->
+      <section class="charts-grid"> 
+        <div class="chart-card">
+          <div class="chart-header"><span class="dot"></span> Emotion Frequency</div>
+          <div id="emotionPieChart" class="chart-area">
+            <div class="donut-chart-container">
+              <div class="donut-chart">
+                <div class="donut-center">
+                  <div class="donut-center-text">100%</div>
+                </div>
+              </div>
+              <div class="donut-legend">
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #22c55e;"></div>
+                  <span class="legend-text">Calm</span>
+                  <span class="legend-count">45%</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #f97316;"></div>
+                  <span class="legend-text">Happy</span>
+                  <span class="legend-count">30%</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #8b5cf6;"></div>
+                  <span class="legend-text">Confused</span>
+                  <span class="legend-count">15%</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #ef4444;"></div>
+                  <span class="legend-text">Disgusted</span>
+                  <span class="legend-count">5%</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #7c3aed;"></div>
+                  <span class="legend-text">Stressed</span>
+                  <span class="legend-count">5%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><span class="dot"></span> Focus Score Timeline</div>
+          <div id="emotionLineChart" class="chart-area">
+            <div class="timeline-chart-container">
+              <svg class="timeline-chart" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+                <!-- Grid lines -->
+                <line x1="40" y1="20" x2="40" y2="130" stroke="#e5e7eb" stroke-width="1"/>
+                <line x1="40" y1="130" x2="260" y2="130" stroke="#e5e7eb" stroke-width="1"/>
+                
+                <!-- Y-axis labels -->
+                <text x="35" y="25" text-anchor="end" class="chart-label">100</text>
+                <text x="35" y="45" text-anchor="end" class="chart-label">80</text>
+                <text x="35" y="65" text-anchor="end" class="chart-label">60</text>
+                <text x="35" y="85" text-anchor="end" class="chart-label">40</text>
+                <text x="35" y="105" text-anchor="end" class="chart-label">20</text>
+                <text x="35" y="135" text-anchor="end" class="chart-label">0</text>
+                
+                <!-- X-axis labels -->
+                <text x="60" y="145" text-anchor="middle" class="chart-label">0</text>
+                <text x="110" y="145" text-anchor="middle" class="chart-label">2</text>
+                <text x="160" y="145" text-anchor="middle" class="chart-label">4</text>
+                <text x="210" y="145" text-anchor="middle" class="chart-label">6</text>
+                <text x="260" y="145" text-anchor="middle" class="chart-label">8</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <div class="cta">
+        <a href="index.html" class="primary-cta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M3 21v-5h5"/>
+          </svg>
+          Start New Session
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
