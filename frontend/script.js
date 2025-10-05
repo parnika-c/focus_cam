@@ -10,7 +10,7 @@ let sessionId = null;
 // set a user identifier (replace with real authenticated id in production)
 const USER_ID = 'test-user';
 
-const API_ENDPOINT = 'https://pkrk86y6r5.execute-api.us-west-1.amazonaws.com/';
+const API_ENDPOINT = 'https://pkrk86y6r5.execute-api.us-west-1.amazonaws.com/default/ProcessFocusImage';
 
 // Start webcam and session
 startBtn.onclick = async () => {
