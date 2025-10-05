@@ -1,8 +1,18 @@
+# Actually running on AWS Lambda - just storing for reference 
+# Lambda function to process focus image, analyze with Rekognition, store results in DynamoDB
+
 import json, base64, boto3, os, time, uuid
+from decimal import Decimal
 
 rekog = boto3.client('rekognition')
 dynamo = boto3.resource('dynamodb')
 events_tbl = dynamo.Table(os.environ['FOCUS_EVENTS_TABLE'])
+
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS"
+}
 
 def compute_focus(fd):
     # basic pose / eyes calculations
@@ -56,22 +66,65 @@ def compute_focus(fd):
     score = max(0, min(100, 0.6 * eyes_open + 0.3 * (100 - pose_penalty) + 0.1 * emo_adj))
     return score, derived_top, raw_top
 
-def handler(event, ctx):
-    body = json.loads(event.get('body') or '{}')
-    session_id = body['sessionId']
-    img_b64 = body['imageBase64'].split(',')[-1]
+def lambda_handler(event, ctx):
+
+    http_method = event.get('requestContext', {}).get('http', {}).get('method', '')
+
+    # Handle CORS preflight OPTIONS request
+    if http_method == 'OPTIONS':
+        return {
+            "statusCode": 200,
+            "headers": CORS_HEADERS,
+            "body": ""
+        }
+
+    print("Event received:", json.dumps(event))  # Debug full event
+    body_raw = event.get('body') or '{}'
+    print("Raw body:", body_raw)
+
+    body = json.loads(body_raw)
+    print("Parsed body:", body)
+
+    session_id = body.get('sessionId')
+    img_b64 = body.get('imageBase64')
+    user_id = body.get('user_id')
+    timestamp = body.get('timestamp')
+
+    if not (session_id and img_b64 and user_id and timestamp):
+        return {
+            "statusCode": 400,
+            "headers": CORS_HEADERS,
+            "body": json.dumps({"ok": False, "error": "Missing required fields"})
+        }
+
     img_bytes = base64.b64decode(img_b64)
+
 
     resp = rekog.detect_faces(Image={'Bytes': img_bytes}, Attributes=['ALL'])
     fds = resp.get('FaceDetails', [])
     if not fds:
-        return {"statusCode": 200, "body": json.dumps({"ok": True, "focusScore": 0, "note": "no face"})}
+        print("No faces detected in image, skipping DynamoDB write.")
+        return {"statusCode": 200, "headers": CORS_HEADERS, "body": json.dumps({"ok": True, "focusScore": 0, "note": "no face"})}
 
     score, topEmotion, rawEmotion = compute_focus(fds[0])
-    ts = int(time.time()*1000)
-    events_tbl.put_item(Item={
-        'sessionId': session_id, 'ts': ts,
-        'focusScore': score, 'emotionTop': topEmotion, 'emotionRaw': rawEmotion
-    })
-    return {"statusCode": 200, "headers": {"Access-Control-Allow-Origin":"*"},
-            "body": json.dumps({"ok": True, "focusScore": score, "emotionTop": topEmotion, "emotionRaw": rawEmotion, "ts": ts})}
+
+    item = {
+        'user_id': user_id,
+        'timestamp': timestamp,
+        'sessionId': session_id,
+        'focusScore': Decimal(str(score)),  # convert float to Decimal
+        'emotionTop': topEmotion,
+        'emotionRaw': rawEmotion
+    }
+    print("Putting item to DynamoDB:", item)
+
+    try:
+        response = events_tbl.put_item(Item=item)
+        print("DynamoDB response:", response)
+    except Exception as e:
+        print("DynamoDB write error:", str(e))
+
+
+    return {"statusCode": 200, 
+            "headers": CORS_HEADERS,
+            "body": json.dumps({"ok": True, "focusScore": score, "emotionTop": topEmotion, "emotionRaw": rawEmotion, "timestamp": timestamp})}
