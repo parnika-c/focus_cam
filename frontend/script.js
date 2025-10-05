@@ -488,6 +488,34 @@ function updateEmotionLineChart() {
   lineChartContainer.innerHTML = chartHTML;
 }
 
+// Mode toggle: Focus vs Super Focus
+document.addEventListener('DOMContentLoaded', () => {
+  const focusBtn = document.getElementById('modeFocus');
+  const superBtn = document.getElementById('modeSuper');
+
+  if (!focusBtn || !superBtn) return;
+
+  function setMode(isSuper) {
+    document.body.classList.toggle('super-focus-mode', !!isSuper);
+
+    // Update active states
+    if (isSuper) {
+      superBtn.classList.add('active');
+      superBtn.setAttribute('aria-selected', 'true');
+      focusBtn.classList.remove('active');
+      focusBtn.setAttribute('aria-selected', 'false');
+    } else {
+      focusBtn.classList.add('active');
+      focusBtn.setAttribute('aria-selected', 'true');
+      superBtn.classList.remove('active');
+      superBtn.setAttribute('aria-selected', 'false');
+    }
+  }
+
+  focusBtn.addEventListener('click', () => setMode(false));
+  superBtn.addEventListener('click', () => setMode(true));
+});
+
 // Initialize analytics page if present
 document.addEventListener('DOMContentLoaded', () => {
   const onAnalytics = !!document.getElementById('emotionPieChart');

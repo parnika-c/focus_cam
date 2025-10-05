@@ -22,6 +22,26 @@
         <p class="header-subtitle">AI-powered focus monitoring to enhance your study sessions and productivity</p>
       </div>
 
+      <!-- Focus Mode Selector (restored) -->
+      <div class="focus-mode-bar">
+        <span class="small muted">Mode:</span>
+        <div class="mode-toggle" role="tablist" aria-label="Focus Mode">
+          <button id="modeFocus" class="mode-option active" data-mode="focus" role="tab" aria-selected="true">
+            <svg class="icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>
+            </svg>
+            <span>Focus Mode</span>
+          </button>
+          <button id="modeSuper" class="mode-option" data-mode="super-focus" role="tab" aria-selected="false">
+            <svg class="icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+              <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline>
+            </svg>
+            <span>Super Focus Mode</span>
+          </button>
+        </div>
+      </div>
+
       <div class="layout">
         <!-- Camera Section (spans 2 columns on large screens) -->
         <div class="layout-main">
@@ -76,8 +96,8 @@
 
         <!-- Sidebar -->
         <div class="layout-side">
-          <!-- Session Timer Card -->
-          <div class="card shadow-lg glass">
+          <!-- Session Timer Card (restored id) -->
+          <div id="sessionTimerCard" class="card shadow-lg glass">
             <div class="card-content">
               <div class="bar">
                 <div class="bar-left">
@@ -140,7 +160,6 @@
 
       <!-- Footer -->
       <div class="footer">
-        <p class="muted small">Your privacy is protected. All monitoring happens locally on your device.</p>
         <p class="muted small">Made by Parnika Chaturvedi · Diya Desai · Esha Shivakumar — © 2025</p>
       </div>
     </div>

@@ -30,6 +30,13 @@
 }
 .header-subtitle { color: var(--muted-fg); max-width: 32rem; margin-inline: auto; }
 
+/* Focus Mode Selector */
+.focus-mode-bar { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin: 1rem 0 1.25rem; }
+.mode-toggle { display: inline-flex; align-items: center; background: rgba(255,255,255,0.8); border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 9999px; padding: 0.25rem; box-shadow: 0 4px 12px rgba(2,6,23,0.06); backdrop-filter: blur(6px); }
+.mode-option { appearance: none; border: 0; background: transparent; color: var(--slate-600); padding: 0.5rem 0.75rem; border-radius: 9999px; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600; }
+.mode-option:hover { background: rgba(148,163,184,0.12); }
+.mode-option.active { background: rgba(var(--primary-rgb), 0.12); color: var(--primary); box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb), 0.25); }
+
 /* Page background and base */
 html, body {
   height: 100%;
@@ -359,3 +366,46 @@ body {
     min-height: 150px;
   }
 }
+
+/* Super Focus Mode */
+body.super-focus-mode .layout-main { display: none !important; }
+@media (min-width: 1024px) {
+  body.super-focus-mode .layout-side { grid-column: span 2 / span 2; }
+}
+body.super-focus-mode .layout-side .card { display: none !important; }
+body.super-focus-mode .layout-side #sessionTimerCard { display: block !important; }
+
+/* Super Focus Mode – center timer and increase size */
+body.super-focus-mode .layout-side {
+  display: grid;
+  place-items: center; /* centers the only visible card */
+  min-height: 50vh; /* give space to center within */
+}
+body.super-focus-mode .layout-side #sessionTimerCard {
+  display: block !important;
+  width: min(900px, 100%);
+  min-height: 420px; /* increased height */
+}
+body.super-focus-mode #sessionTimerCard .card-content { padding: 2rem; }
+body.super-focus-mode #sessionTimerCard .time { font-size: clamp(2.25rem, 4vw, 3rem); }
+
+/* Center timer card to the page in Super Focus Mode */
+body.super-focus-mode .layout {
+  grid-template-columns: 1fr !important;
+  min-height: 80vh;
+  place-items: center; /* centers grid items horizontally and vertically */
+}
+body.super-focus-mode .layout-side { display: contents; }
+
+/* Super Focus Mode – center timer block in the middle of the card */
+body.super-focus-mode #sessionTimerCard { position: relative; }
+body.super-focus-mode #sessionTimerCard .center {
+  position: absolute;
+  top: 55%; /* slightly pushed down */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  padding: 0 1rem;
+}
+
+
