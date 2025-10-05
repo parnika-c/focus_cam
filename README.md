@@ -1,73 +1,72 @@
-FOCUS CAM
+Focus Cam
 
-This small project captures webcam images from a browser frontend and posts them to an AWS Lambda which uses Rekognition to compute a "focus" score and save events to DynamoDB.
+Lightweight web app that captures webcam frames in the browser and posts them to an AWS Lambda. The Lambda uses Amazon Rekognition to produce a simple "focus" score and records events in DynamoDB.
 
-Structure
-- `frontend/` - static assets (index.html, script.js, style.css)
-- `lambda/` - AWS Lambda function code (`processFocusImage.py`)
+### Features
+- Simple static frontend: webcam capture, periodic frame upload
+- Serverless backend: AWS Lambda + API Gateway
+- Storage/analytics: DynamoDB for event logs, optional analytics view
 
-Quick goals
-- Run the frontend locally and record a session.
-- Send images to the Lambda endpoint (API Gateway) which analyzes faces and stores events in DynamoDB.
+### Project Structure
+- `frontend/` — static assets (`index.html`, `script.js`, `style.css`, analytics page)
+- `lambda/` — Lambda code (`processFocusImage.py`)
 
-Prerequisites
-- Node.js (for serving frontend locally) or any static file server
-- Python 3.9+ (for Lambda tests)
-- AWS account and CLI configured (for deploy)
-- Optional: AWS SAM CLI for local Lambda/API testing
+### Prerequisites
+- Node.js (to serve the frontend locally) or any static file server
+- Python 3.9+ (for local Lambda testing)
+- AWS account with credentials configured (for deploy)
 
-Frontend - run locally
-1. Open `frontend/index.html` in your browser (or serve the folder). For a quick static server using Node:
+### Quickstart (Frontend)
+1) From the project root, start a static server and open the app:
 
 ```bash
-# from project root
 npx http-server frontend -p 8080
-# then open http://localhost:8080
+open http://localhost:8080
 ```
 
-2. Click Start to allow webcam access. The frontend will generate a session id and post images every 5 seconds to the API endpoint configured in `frontend/script.js` (update `API_ENDPOINT` to your API Gateway URL).
+2) Click Start and grant webcam permission. Frames are sent every ~5s to the configured API.
 
-Payload keys sent to Lambda
-- `sessionId` (string) - session identifier
-- `userId` (string) - optional user identifier
-- `timestamp` (ISO string)
-- `imageBase64` (base64-encoded JPEG bytes without data: prefix)
+3) Set your API URL in `frontend/script.js` by updating `API_ENDPOINT`.
 
-Lambda - local testing
-1. Install dependencies for local testing (boto3 if you want to call AWS services locally):
+### Request Payload (to Lambda)
+- `sessionId`: string — generated per session
+- `userId`: string — optional user identifier
+- `timestamp`: ISO string
+- `imageBase64`: base64-encoded JPEG bytes (no data: prefix)
+
+### Lambda: Local Testing
+Install boto3 if needed and invoke the handler with a sample payload:
 
 ```bash
 pip install boto3
 ```
-
-2. To test the Lambda handler directly with a saved image, you can write a small Python snippet to load an image, base64-encode it and call `handler` from `lambda/processFocusImage.py` (the code expects payload keys `sessionId` and `imageBase64`).
-
-Example quick test (python REPL):
 
 ```python
 import json, base64
 from processFocusImage import handler
 
 with open('test.jpg','rb') as f:
-	b = base64.b64encode(f.read()).decode('utf-8')
+    b = base64.b64encode(f.read()).decode('utf-8')
 
 evt = {'body': json.dumps({'sessionId':'local-1','imageBase64': b})}
 print(handler(evt, None))
 ```
 
-Note: the real Lambda uses `boto3.client('rekognition')` and `boto3.resource('dynamodb')`. When running locally, either mock these calls or ensure AWS credentials and network access are available.
+### Deploy (High-level)
+1) DynamoDB: create a table for focus events; set env var `FOCUS_EVENTS_TABLE` on the Lambda.
+2) Lambda: deploy `lambda/processFocusImage.py` with permissions for Rekognition + DynamoDB.
+3) API Gateway: create a POST endpoint that invokes the Lambda; set its URL as `API_ENDPOINT` in `frontend/script.js`.
 
-Deploying to AWS (high-level)
-1. Create a DynamoDB table and set its name in the Lambda env var `FOCUS_EVENTS_TABLE`.
-2. Create a Lambda function using `lambda/processFocusImage.py` as the handler. Ensure the Lambda role has permissions for Rekognition and DynamoDB.
-3. Create an API Gateway REST API or HTTP API with a POST method that invokes the Lambda. Note the URL and set it as `API_ENDPOINT` in `frontend/script.js`.
+### Configuration
+- Frontend: set `API_ENDPOINT` and, if present, replace any hardcoded `USER_ID`.
+- Lambda env vars: `FOCUS_EVENTS_TABLE` (required).
 
-Security & next steps
-- Add auth to the API (Cognito / API keys / IAM) before exposing it publicly.
-- Replace the hardcoded `USER_ID` in `frontend/script.js` with a real authenticated user id.
-- Add unit tests for `processFocusImage.py` with mocked Rekognition responses (I can add pytest examples if you want).
+### Security Notes
+- Do not expose unauthenticated endpoints publicly. Consider Cognito, API keys, or IAM auth.
+- Treat uploaded images as sensitive; follow your data retention policy.
 
-If you'd like, I can:
-- Add a small test harness for local Lambda testing (pytest + moto mocks).
-- Generate deployment IaC (SAM template or CloudFormation) to wire up API Gateway + Lambda + DynamoDB.
-
+### Roadmap (ideas)
+- Add authentication and per-user sessions
+- Improve focus scoring heuristics or replace with a small on-device model
+- Add unit tests for the Lambda (moto/pytest) and a minimal CI
+- Provide IaC (SAM/CloudFormation) for one-command deploy
