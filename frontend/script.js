@@ -5,13 +5,20 @@ const statusText = document.getElementById('status');
 
 let stream = null;
 let captureInterval = null;
+let sessionId = null;
 
-const API_ENDPOINT = 'https://your-api-id.execute-api.region.amazonaws.com/dev/focus'; // replace this
+// set a user identifier (replace with real authenticated id in production)
+const USER_ID = 'test-user';
+
+const API_ENDPOINT = 'https://pkrk86y6r5.execute-api.us-west-1.amazonaws.com/';
 
 // Start webcam and session
 startBtn.onclick = async () => {
   stream = await navigator.mediaDevices.getUserMedia({ video: true });
   video.srcObject = stream;
+
+  // create a session id for this recording session
+  sessionId = `${USER_ID}-${Date.now()}`;
 
   startBtn.disabled = true;
   stopBtn.disabled = false;
@@ -43,9 +50,10 @@ async function captureAndSend() {
   const base64Image = canvas.toDataURL('image/jpeg').split(',')[1]; // strip prefix
 
   const payload = {
-    user_id: 'user123', // hardcoded or dynamic
+    sessionId: sessionId,
+    userId: USER_ID, // optional - kept for records
     timestamp: new Date().toISOString(),
-    image_base64: base64Image
+    imageBase64: base64Image
   };
 
   try {
@@ -66,3 +74,18 @@ async function captureAndSend() {
     console.error('Fetch error:', err);
   }
 }
+
+
+/**
+
+Your frontend should be sending something like this:
+
+{
+  "user_id": "user123",
+  "timestamp": "2025-10-04T22:48:00Z",
+  "sessionId": "abc-123",
+  "imageBase64": "data:image/jpeg;base64,..."
+}
+
+
+ */
